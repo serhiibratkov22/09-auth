@@ -1,4 +1,4 @@
-import CreateNoteClient from './CreateNoteClient';
+import CreateNoteClient from '../../../notes/action/create/CreateNoteClient';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
