@@ -1,46 +1,62 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+// middleware.ts
+
+import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { checkSessionServer } from './lib/api/serverApi';
 
-const protectedRoutes = ['/profile', '/notes', '/notes/action'];
+const privateRoutes = ['/profile'];
 const publicRoutes = ['/sign-in', '/sign-up'];
 
-export async function middleware(req: NextRequest) {
+export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
   const cookieStore = await cookies();
   const accessToken = cookieStore.get('accessToken')?.value;
   const refreshToken = cookieStore.get('refreshToken')?.value;
-  const pathname = req.nextUrl.pathname;
 
-  if (accessToken) {
-    if (publicRoutes.some(path => pathname.startsWith(path))) {
-      return NextResponse.redirect(new URL('/', req.url));
-    }
-    return NextResponse.next();
-  }
-  if (!accessToken && refreshToken) {
-    const ok = await checkSessionServer();
+  const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route));
+  const isPrivateRoute = privateRoutes.some(route =>
+    pathname.startsWith(route),
+  );
 
-    if (ok) {
-      if (publicRoutes.some(path => pathname.startsWith(path))) {
-        return NextResponse.redirect(new URL('/', req.url));
+  if (!accessToken) {
+    if (refreshToken) {
+      try {
+        const isSessionValid = await checkSessionServer();
+
+        if (isSessionValid) {
+          if (isPublicRoute) {
+            return NextResponse.redirect(new URL('/', request.url));
+          }
+
+          if (isPrivateRoute) {
+            return NextResponse.next();
+          }
+        }
+      } catch (error) {
+        console.error('Session check failed:', error);
       }
+    }
+
+    if (isPublicRoute) {
       return NextResponse.next();
     }
+
+    if (isPrivateRoute) {
+      return NextResponse.redirect(new URL('/sign-in', request.url));
+    }
   }
-  if (protectedRoutes.some(path => pathname.startsWith(path))) {
-    return NextResponse.redirect(new URL('/sign-in', req.url));
+
+  if (isPublicRoute) {
+    return NextResponse.redirect(new URL('/', request.url));
+  }
+
+  if (isPrivateRoute) {
+    return NextResponse.next();
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: [
-    '/profile/:path*',
-    '/notes/:path*',
-    '/notes/action/:path*',
-    '/sign-in',
-    '/sign-up',
-  ],
+  matcher: ['/profile/:path*', '/sign-in', '/sign-up'],
 };
