@@ -1,8 +1,8 @@
 import NotesClient from './Notes.client';
-import { fetchNotes } from '@/lib/api';
+import { fetchNotesServer } from '@/lib/api/serverApi';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
-import type { FetchNotesResponse } from '@/lib/api';
+import type { FetchNotesResponse } from '@/lib/api/serverApi';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 
   try {
-    const fetched = await fetchNotes('', 1, 12, tagParam);
+    const fetched = await fetchNotesServer('', 1, 12, tagParam);
     data.notes = fetched.notes || [];
     data.totalPages = fetched.totalPages || 0;
   } catch {}
@@ -57,7 +57,7 @@ export default async function FilteredNotesPage({ params }: Props) {
   };
 
   try {
-    const fetched = await fetchNotes('', 1, 12, tagParam);
+    const fetched = await fetchNotesServer('', 1, 12, tagParam);
     data.notes = fetched.notes || [];
     data.totalPages = fetched.totalPages || 0;
   } catch {

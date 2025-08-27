@@ -8,7 +8,7 @@ import iziToast from 'izitoast';
 import 'izitoast/dist/css/iziToast.min.css';
 import css from './NoteForm.module.css';
 import { useNoteStore, initialDraft } from '@/lib/store/noteStore';
-import { createNote, FetchNotesResponse } from '@/lib/api';
+import { createNoteClient, FetchNotesResponse } from '@/lib/api/clientApi';
 import type { NewNoteData } from '@/types/note';
 import type { ISchema } from 'yup';
 
@@ -41,7 +41,7 @@ export default function NoteForm({ categories }: Props) {
   >({});
 
   const mutation = useMutation({
-    mutationFn: (data: NewNoteData) => createNote(data),
+    mutationFn: (data: NewNoteData) => createNoteClient(data),
     onSuccess: newNote => {
       queryClient.setQueryData<FetchNotesResponse>(['notes'], oldData => {
         if (!oldData) return { notes: [newNote], totalPages: 1 };
