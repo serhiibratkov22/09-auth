@@ -1,6 +1,7 @@
 import api from './api';
 import type { Note, NewNoteData } from '@/types/note';
 import type { User } from '@/types/user';
+import type { AxiosResponse } from 'axios';
 import { cookies } from 'next/headers';
 
 export interface FetchNotesResponse {
@@ -59,14 +60,21 @@ export async function fetchProfileServer(): Promise<User | null> {
   }
 }
 
-export const checkSessionServer = async (): Promise<boolean> => {
-  try {
-    const headers = await getAuthHeaders();
-    if (!headers.Cookie) return false;
-    const res = await api.get('/auth/session', { headers });
-    return res.status === 200;
-  } catch (error) {
-    console.error('Session check failed (server):', error);
-    return false;
-  }
+export const checkSessionServer =
+  async (): Promise<AxiosResponse<User> | null> => {
+    try {
+      const headers = await getAuthHeaders();
+      if (!headers.Cookie) return null;
+
+      const res = await api.get<User>('/auth/session', { headers });
+      return res;
+    } catch (error) {
+      console.error('Session check failed (server):', error);
+      return null;
+    }
+  };
+
+export const isSessionValidServer = async (): Promise<boolean> => {
+  const res = await checkSessionServer();
+  return !!(res && res.status === 200 && res.data);
 };
